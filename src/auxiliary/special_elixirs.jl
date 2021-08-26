@@ -131,7 +131,117 @@ function convergence_test(mod::Module, elixir::AbstractString, iterations; kwarg
   return eoc_mean_values
 end
 
+function convergence_test_booktabs(mod::Module, elixir::AbstractString, iterations; kwargs...)
+  @assert(iterations > 1, "Number of iterations must be bigger than 1 for a convergence analysis")
+
+  # Types of errors to be calcuated
+  errors = Dict(:l2 => Float64[], :linf => Float64[])
+  error_latex = Dict(:l2 => "L^2", :linf => "L^\\infty")
+  variable_latex = Dict("rho" => "\\rho",
+                        "rho_v1" => "\\rho v_1",
+                        "rho_v2" => "\\rho v_2",
+                        "rho_v3" => "\\rho v_3",
+                        "rho_e" => "\\rho E")
+
+  initial_resolution = extract_initial_resolution(elixir, kwargs)
+
+  # run simulations and extract errors
+  for iter in 1:iterations
+    println("Running convtest iteration ", iter, "/", iterations)
+
+    include_refined(mod, elixir, initial_resolution, iter; kwargs)
+
+    l2_error, linf_error = mod.analysis_callback(mod.sol)
+
+    # collect errors as one vector to reshape later
+    append!(errors[:l2],   l2_error)
+    append!(errors[:linf], linf_error)
+
+    println("\n\n")
+    println("#"^100)
+  end
+
+  # number of variables
+  _, equations, _, _ = mesh_equations_solver_cache(mod.semi)
+  variablenames = varnames(cons2cons, equations)
+  nvariables = length(variablenames)
+
+  # Reshape errors to get a matrix where the i-th row represents the i-th iteration
+  # and the j-th column represents the j-th variable
+  errorsmatrix = Dict(kind => transpose(reshape(error, (nvariables, iterations))) for (kind, error) in errors)
+
+  # Calculate EOCs where the columns represent the variables
+  # As dx halves in every iteration the denominator needs to be log(1/2)
+  eocs = Dict(kind => log.(error[2:end, :] ./ error[1:end-1, :]) ./ log(1 / 2) for (kind, error) in errorsmatrix)
+
+  eoc_mean_values = Dict{Symbol,Any}()
+  eoc_mean_values[:variables] = variablenames
+
+  for (kind, error) in errorsmatrix
+    println("\\begin{tabular}{$("r"^(2*nvariables+1))}")
+    println("  \\toprule")
+    print("  ")
+    for v in variablenames
+      print("& \\multicolumn{2}{c}{\$$(variable_latex[v])\$} ")
+    end
+    println("\\\\")
+
+    print("  ")
+    for v in 1:nvariables-1
+      c = 2 * v
+      print("\\cmidrule(lr){$c-$(c+1)}")
+    end
+    c = 2 * nvariables
+    print("\\cmidrule(l){$c-$(c+1)}")
+
+    print("  RL ")
+    for k = 1:nvariables
+      print("& \$$(error_latex[kind])\$-error ")
+      print("& EOC ")
+    end
+    println("\\\\")
+    println("  \\midrule")
+
+    print("  \$1\$ ")
+    # Print errors for the first iteration
+    for k = 1:nvariables
+      print("& \$\\num{$(@sprintf("%.2e",error[1, k]))}\$ ")
+      print("& ")
+    end
+    println("\\\\")
+
+    # For the following iterations print errors and EOCs
+    for j = 2:iterations
+      print("  \$$j\$ ")
+      for k = 1:nvariables
+        print("& \$\\num{$(@sprintf("%.2e",error[j, k]))}\$ ")
+        print("& \$$(@sprintf("%.2f",eocs[kind][j-1, k]))\$ ")
+      end
+      println("\\\\")
+    end
+    println("  \\midrule")
+
+    # Print mean EOCs
+    print("  \\multicolumn{2}{l}{mean EOC} & ")
+    mean_values = zeros(nvariables)
+    for v in 1:nvariables-1
+      mean_values[v] = sum(eocs[kind][:, v]) ./ length(eocs[kind][:, v])
+      print("\$$(@sprintf("%.2f",mean_values[v]))\$ & & ")
+    end
+    mean_values[nvariables] = sum(eocs[kind][:, nvariables]) ./ length(eocs[kind][:, nvariables])
+    print("\$$(@sprintf("%.2f",mean_values[nvariables]))\$")
+
+    eoc_mean_values[kind] = mean_values
+    println("\\\\")
+    println("  \\bottomrule")
+    println("\\end{tabular}")
+  end
+
+  return eoc_mean_values
+end
+
 convergence_test(elixir::AbstractString, iterations; kwargs...) = convergence_test(Main, elixir::AbstractString, iterations; kwargs...)
+convergence_test_booktabs(elixir::AbstractString, iterations; kwargs...) = convergence_test_booktabs(Main, elixir::AbstractString, iterations; kwargs...)
 
 
 
