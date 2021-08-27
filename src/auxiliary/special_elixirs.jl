@@ -181,18 +181,26 @@ function convergence_test_booktabs(mod::Module, elixir::AbstractString, iteratio
     println("\\begin{tabular}{$("r"^(2*nvariables+1))}")
     println("  \\toprule")
     print("  ")
-    for v in variablenames
-      print("& \\multicolumn{2}{c}{\$$(variable_latex[v])\$} ")
-    end
-    println("\\\\")
 
-    print("  ")
-    for v in 1:nvariables-1
-      c = 2 * v
-      print("\\cmidrule(lr){$c-$(c+1)}")
+    multicolumn = false
+
+    for v in variablenames
+      if v in keys(variable_latex)
+        multicolumn = true
+        print("& \\multicolumn{2}{c}{\$$(variable_latex[v])\$} ")
+      end
     end
-    c = 2 * nvariables
-    print("\\cmidrule(l){$c-$(c+1)}")
+
+    if multicolumn
+      println("\\\\")
+      print("  ")
+      for v in 1:nvariables-1
+        c = 2 * v
+        print("\\cmidrule(lr){$c-$(c+1)}")
+      end
+      c = 2 * nvariables
+      print("\\cmidrule(l){$c-$(c+1)}")
+    end
 
     print("  RL ")
     for k = 1:nvariables
