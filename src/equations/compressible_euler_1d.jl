@@ -8,8 +8,28 @@
 @doc raw"""
     CompressibleEulerEquations1D(gamma)
 
-The compressible Euler equations for an ideal gas with ratio of specific heats `gamma`
-in one space dimension.
+The compressible Euler equations
+```math
+\partial t
+\begin{pmatrix}
+\rho \\ \rho v_1 \\ \rho e
+\end{pmatrix}
++
+\partial x
+\begin{pmatrix}
+\rho v_1 \\ \rho v_1^2 + p \\ (\rho e +p) v_1
+\end{pmatrix}
+=
+\begin{pmatrix}
+0 \\ 0 \\ 0
+\end{pmatrix}
+```
+for an ideal gas with ratio of specific heats `gamma` in one space dimension.
+Here, ``\rho`` is the density, ``v_1`` the velocity, ``e`` the specific total energy **rather than** specific internal energy, and
+```math
+p = (\gamma - 1) \left( \rho e - \frac{1}{2} \rho v_1^2 \right)
+```
+the pressure.
 """
 struct CompressibleEulerEquations1D{RealT<:Real} <: AbstractCompressibleEulerEquations{1, 3}
   gamma::RealT               # ratio of specific heats
@@ -91,22 +111,6 @@ Source terms used for convergence tests in combination with
   du3 = du2
 
   return SVector(du1, du2, du3)
-end
-
-
-"""
-    initial_condition_density_pulse(x, t, equations::CompressibleEulerEquations1D)
-
-A Gaussian pulse in the density with constant velocity and pressure; reduces the
-compressible Euler equations to the linear advection equations.
-"""
-function initial_condition_density_pulse(x, t, equations::CompressibleEulerEquations1D)
-  rho = 1 + exp(-(x[1]^2 ))/2
-  v1 = 1
-  rho_v1 = rho * v1
-  p = 1
-  rho_e = p/(equations.gamma - 1) + 1/2 * rho * v1^2
-  return SVector(rho, rho_v1, rho_e)
 end
 
 

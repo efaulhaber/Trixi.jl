@@ -29,10 +29,11 @@ DocMeta.setdocmeta!(Trixi2Vtk, :DocTestSetup, :(using Trixi2Vtk); recursive=true
 #   "title" => ["subtitle 1" => ("folder 1", "filename 1.jl"),
 #               "subtitle 2" => ("folder 2", "filename 2.jl")]
 files = [
-    "Adding a new equation" => ["Scalar conservation law" => ("adding_new_equations_literate", "cubic_conservation_law_literate.jl"),
-                                "Nonconservative equation" => ("adding_new_equations_literate", "nonconservative_advection_literate.jl")],
-    "Differentiable programming" => "differentiable_programming_literate.jl",
-    "Unstructured meshes with HOHQMesh.jl" => "hohqmesh_literate.jl",
+    "Introduction to DG methods" => "scalar_linear_advection_1d.jl",
+    "Adding a new equation" => ["Scalar conservation law" => ("adding_new_equations", "cubic_conservation_law.jl"),
+                                "Nonconservative equation" => ("adding_new_equations", "nonconservative_advection.jl")],
+    "Differentiable programming" => "differentiable_programming.jl",
+    "Unstructured meshes with HOHQMesh.jl" => "hohqmesh_tutorial.jl",
     ]
 tutorials = create_tutorials(files)
 
@@ -58,22 +59,14 @@ makedocs(
             "Overview" => "overview.md",
             "Visualization" => "visualization.md",
         ],
-        "Tutorials" => [
-            "Adding a new equation" => [
-                "Scalar conservation law" => joinpath("adding_new_equations", "cubic_conservation_law.md"),
-                "Nonconservative equation" => joinpath("adding_new_equations", "nonconservative_advection.md")
-            ],
-            "Differentiable programming" => "differentiable_programming.md",
-            "Unstructured meshes with HOHQMesh.jl" => "hohqmesh_tutorial.md",
-        ],
-        "Tutorials Literate" => tutorials,
+        "Tutorials" => tutorials,
         "Basic building blocks" => [
             "Meshes" => [
                 "Tree mesh" => joinpath("meshes", "tree_mesh.md"),
                 "Structured mesh" => joinpath("meshes", "structured_mesh.md"),
                 "Unstructured mesh" => joinpath("meshes", "unstructured_quad_mesh.md"),
                 "P4est-based mesh" => joinpath("meshes", "p4est_mesh.md"),
-                "Simplicial mesh" => joinpath("meshes", "mesh_data_meshes.md"),
+                "Simplicial mesh" => joinpath("meshes", "dgmulti_mesh.md"),
             ],
             "Time integration" => "time_integration.md",
             "Callbacks" => "callbacks.md",
