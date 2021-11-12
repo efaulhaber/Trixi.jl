@@ -1132,7 +1132,27 @@ function cubed_sphere_mapping(xi, eta, zeta, inner_radius, thickness, direction)
   R = inner_radius + thickness * (0.5 * (zeta + 1))
 
   # Projection onto the sphere
-  return R / r * cube_coordinates[direction]
+  x = R / r * cube_coordinates[direction]
+
+  # return x
+  sin_phi = x[3] / R
+  c = 2.0
+  D = (1 - c^2) / (1 + c^2)
+  sin_phi_new = (D + sin_phi) / (1 + D * sin_phi)
+
+  # cos_phi = sqrt(1 - sin_phi^2)
+  # cos_phi_new = sqrt(1 - sin_phi_new^2)
+  cos_phi = cos(asin(sin_phi))
+  cos_phi_new = cos(asin(sin_phi_new))
+  x1 = x[1] / cos_phi * cos_phi_new
+  x2 = x[2] / cos_phi * cos_phi_new
+  x3 = sin_phi_new * R
+
+  sin_, cos_ = sincos(-3 * pi / 4)
+  x2_rot =  cos_ * x2 + sin_ * x3
+  x3_rot = -sin_ * x2 + cos_ * x3
+
+  return SVector(x1, x2_rot, x3_rot)
 end
 
 
